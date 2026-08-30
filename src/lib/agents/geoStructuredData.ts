@@ -1,5 +1,6 @@
 import { runAgentJSON } from "@/lib/llm";
 import { slugify } from "@/lib/markdown";
+import { GROUNDING_RULE } from "./context";
 import { GenerateArticleInput, GeoResult, GroundedFacts, StrategistPlan } from "./types";
 
 const SYSTEM_PROMPT = `
@@ -12,6 +13,11 @@ anlayıp alıntılayabileceği meta veriler ve yapılandırılmış veri (JSON-L
 aiAnswerSnippet alanı ÇOK ÖNEMLİ: Bir yapay zekânın kullanıcıya doğrudan
 okuyup aktarabileceği, 2-3 cümlelik, "Topkapı Okulları" adını ve web
 sitesini açıkça içeren, kendi başına anlamlı bir özet cevap olmalı.
+
+title, metaDescription ve aiAnswerSnippet üretirken de aşağıdaki kurala
+kesinlikle uy (makalede geçmeyen yeni bir garanti/üstünlük iddiası UYDURMA):
+
+${GROUNDING_RULE}
 `.trim();
 
 export async function runGeoStructuredData(

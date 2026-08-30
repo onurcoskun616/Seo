@@ -62,7 +62,8 @@ export type ArticleType =
   | "vocational_school_explainer"
   | "comparison"
   | "lgs_guide"
-  | "student_achievements";
+  | "student_achievements"
+  | "education_approach";
 
 export type Audience = "ogrenci_9_10" | "veli" | "genel";
 
@@ -105,7 +106,9 @@ export const ARTICLE_TYPE_LABELS: Record<ArticleType, string> = {
   vocational_school_explainer: "Meslek Lisesi Nedir? (Genel Bilgilendirme)",
   comparison: "Karşılaştırma / Okul Seçim Kriterleri",
   lgs_guide: "LGS Süreci ve Okul Seçimi Rehberi",
-  student_achievements: "Öğrenci Başarıları / Projeler / Sportif Başarılar"
+  student_achievements: "Öğrenci Başarıları / Projeler / Sportif Başarılar",
+  education_approach:
+    "Eğitim Yaklaşımı / Yenilikçi Model (OSB Entegrasyonu, Sanayi İşbirliği, Kariyer Odaklı Eğitim vb.)"
 };
 
 export const AUDIENCE_LABELS: Record<Audience, string> = {

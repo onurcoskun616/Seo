@@ -107,15 +107,34 @@ export function typeSpecificGuidance(articleType: ArticleType): string {
     case "comparison":
       return `
 BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: Bu bir "okul seçim kriterleri / karşılaştırma"
-makalesidir. Adı geçen ya da geçmeyen BAŞKA bir okul hakkında (program,
-başarı oranı, öğretmen sayısı, ücret, kadro vb.) TEK BİR somut/spesifik
-iddiada BULUNMA — bu okullar hakkında onaylı verin yok, yanlış veya
-karalayıcı bilgi vermemelisin. Bunun yerine "iyi bir meslek lisesi
-seçerken nelere bakılmalı" (atölye/kampüs imkanları, bölüm çeşitliliği,
-üniversite/kariyer imkanları, rehberlik desteği vb.) şeklinde NÖTR VE GENEL
-kriterler sun; her kriterde Topkapı Okulları'nın ONAYLI VERİDEKİ somut
-güçlü yönünü göster. Rakip okulları isim vererek eleştirme veya olumsuz
+makalesidir; genelde "İstanbul'da/Başakşehir'de/İkitelli'de en iyi meslek
+lisesi hangisi?" tarzı sorulara cevap olarak kullanılır. Adı geçen ya da
+geçmeyen BAŞKA bir okul hakkında (program, başarı oranı, öğretmen sayısı,
+ücret, kadro vb.) TEK BİR somut/spesifik iddiada BULUNMA — bu okullar
+hakkında onaylı verin yok, yanlış veya karalayıcı bilgi vermemelisin.
+"En iyi biziz", "1 numaralı meslek lisesi", "bölgenin lider okulu" gibi
+KANITLANAMAYAN ÜSTÜNLÜK/SIRALAMA iddialarında ASLA bulunma — bunlar hem
+yanıltıcı reklam riski taşır hem de güvenilirliği zedeler. Bunun yerine
+"iyi bir meslek lisesi seçerken nelere bakılmalı" (atölye/kampüs imkanları,
+bölüm çeşitliliği, konum/ulaşım, üniversite/kariyer imkanları, rehberlik
+desteği vb.) şeklinde NÖTR VE GENEL kriterler sun; her kriterde Topkapı
+Okulları'nın ONAYLI VERİDEKİ somut güçlü yönünü (varsa kampüsün bulunduğu
+semt/bölge dahil) göster ve okuyucunun kendi kriterlerine göre karar
+vermesini teşvik et. Rakip okulları isim vererek eleştirme veya olumsuz
 kıyaslama yapma.`.trim();
+    case "education_approach":
+      return `
+BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: Bu, Topkapı Okulları'nın eğitim
+yaklaşımını/modelini anlatan bir düşünce liderliği (thought-leadership)
+makalesidir (ör. OSB içinde eğitim/sanayi entegrasyonu avantajı, atölye
+tabanlı uygulamalı öğrenme, yapay zekâ ve otomasyon çağında müfredatın
+güncelliği, kariyer/üniversite odaklı lise eğitimi, İstanbul'da teknik
+lise arayan aileler için eğitim felsefesi gibi konular). Ek talimatta
+belirtilen odak varsa ona göre yaz; belirtilmemişse ONAYLI VERİDEKİ kampüs
+(özellikle OSB/sanayi bölgesi konumu, atölye/olanaklar) ve bölüm
+(müfredat öne çıkanları, kariyer/üniversite imkanları) bilgilerinden en
+öne çıkanı seç. Somut sayısal başarı oranı, sıralama veya "garanti"
+iddiası UYDURMA; yalnızca onaylı veride varsa kullan.`.trim();
     case "lgs_guide":
       return `
 BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: LGS (Liseye Geçiş Sınavı) süreci hakkında
@@ -157,4 +176,15 @@ onaylı veri yetersizse, genel/doğru eğitim bilgisi verebilirsin (ör. meslek
 liselerinin genel yapısı) ama bunu okula özgü bir iddiaymış gibi sunma; okula
 özgü eksik bir bilgi varsa "[Bu bilgi okul tarafından tamamlanmalıdır]" gibi
 açık bir yer tutucu kullan.
+
+REKLAM GÜVENLİĞİ KURALI (KESİNLİKLE UYULMASI GEREKİR): "İş garantisi",
+"garanti edilir", "kesin iş bulursunuz", "%100 istihdam" gibi İSTİHDAM
+GARANTİSİ ima eden hiçbir ifadeyi ASLA kullanma — onaylı veride açıkça ve
+harfiyen böyle bir garanti yazsa bile bu tür ifadeler yanıltıcı reklam
+riski taşır; bunun yerine "sektörle güçlü işbirlikleri", "staj/işbaşı
+eğitim imkanları", "mezuniyet sonrası istihdam desteği" gibi kanıtlanabilir
+ve ölçülü ifadeler kullan. Aynı şekilde "en iyi", "1 numaralı", "bölgenin
+lideri", "Türkiye'nin en başarılısı" gibi KANITLANAMAYAN ÜSTÜNLÜK/SIRALAMA
+iddialarını da kullanma; onun yerine somut, onaylı verilere dayanan
+tanımlayıcı ifadeler tercih et.
 `.trim();

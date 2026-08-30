@@ -80,10 +80,19 @@ npm run dev
    bölüm/kampüsü ve hedef kitleyi seçip üretimi başlatın. Desteklenen türler:
    okul kimliği, bölüm/alan tanıtımı, kampüs tanıtımı, veli rehberi,
    "meslek lisesi nedir", okul seçim kriterleri/karşılaştırma (rakip okul
-   hakkında somut iddia üretmez, sadece nötr kriterler + Topkapı'nın onaylı
-   güçlü yönleri), LGS süreci rehberi (yıl bazlı/değişken bilgi vermez) ve
-   öğrenci başarıları/projeler/sportif başarılar (yalnızca Bilgi Bankası >
-   Başarılar sekmesindeki kayıtlara dayanır; kayıt yoksa üretim engellenir).
+   hakkında somut iddia üretmez, "en iyi/1 numaralı" gibi kanıtsız üstünlük
+   iddiası kullanmaz; sadece nötr kriterler + Topkapı'nın onaylı güçlü
+   yönleri), LGS süreci rehberi (yıl bazlı/değişken bilgi vermez), öğrenci
+   başarıları/projeler/sportif başarılar (yalnızca Bilgi Bankası > Başarılar
+   sekmesindeki kayıtlara dayanır; kayıt yoksa üretim engellenir) ve eğitim
+   yaklaşımı/yenilikçi model (OSB entegrasyonu, sanayi işbirliği, yapay
+   zekâ çağında müfredat, kariyer odaklı eğitim gibi düşünce liderliği
+   konuları — "Ek talimat" alanına konu odağını yazabilirsiniz).
+
+   **Reklam güvenliği:** Tüm ajanlar "iş garantisi/garanti edilir" gibi
+   istihdam garantisi ima eden ifadeleri ve "en iyi/1 numaralı" gibi
+   kanıtlanamayan üstünlük iddialarını kullanmaktan kesinlikle kaçınacak
+   şekilde talimatlandırılmıştır (yanıltıcı reklam riski nedeniyle).
 3. Üretilen makaleyi `/articles/[id]` sayfasında inceleyin, gerekirse markdown
    içeriğini düzenleyin, SEO/JSON-LD önizlemesini kontrol edin.
 4. **Dışa Aktarım / Yayınlama**: Markdown, HTML ve JSON-LD'yi kopyalayıp

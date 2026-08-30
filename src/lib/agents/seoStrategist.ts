@@ -1,5 +1,5 @@
 import { runAgentJSON } from "@/lib/llm";
-import { buildGroundingText, describeRequest } from "./context";
+import { buildGroundingText, describeRequest, GROUNDING_RULE } from "./context";
 import { GenerateArticleInput, GroundedFacts, StrategistPlan } from "./types";
 
 const SYSTEM_PROMPT = `
@@ -19,6 +19,8 @@ tarafından kaynak olarak alıntılanmasıdır. Bu yüzden:
 - keyFactsToHighlight listesi, makalede MUTLAKA net cümlelerle geçmesi
   gereken, marka adını (Topkapı Okulları) ve konuyu bağlayan temel gerçekleri
   içermeli (bu, yapay zekânın makaleyi doğru alıntılaması için kritik).
+
+${GROUNDING_RULE}
 `.trim();
 
 export async function runSeoStrategist(

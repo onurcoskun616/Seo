@@ -15,7 +15,8 @@ const VALID_TYPES: ArticleType[] = [
   "vocational_school_explainer",
   "comparison",
   "lgs_guide",
-  "student_achievements"
+  "student_achievements",
+  "education_approach"
 ];
 const VALID_AUDIENCES: Audience[] = ["ogrenci_9_10", "veli", "genel"];
 
