@@ -1,4 +1,4 @@
-import { runAgentJSON } from "@/lib/anthropic";
+import { runAgentJSON } from "@/lib/llm";
 import { slugify } from "@/lib/markdown";
 import { GenerateArticleInput, GeoResult, GroundedFacts, StrategistPlan } from "./types";
 

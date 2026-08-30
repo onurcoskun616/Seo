@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PublishConfig } from "@/lib/types";
 
 interface Status {
-  anthropicConfigured: boolean;
+  openaiConfigured: boolean;
   supabaseConfigured: boolean;
   model: string;
   siteUrl: string;
@@ -82,8 +82,8 @@ export default function SettingsPage() {
         ) : (
           <ul className="space-y-2 text-sm">
             <li>
-              Anthropic (Claude) API:{" "}
-              <StatusBadge ok={status.anthropicConfigured} okLabel="Yapılandırılmış" badLabel="Eksik (ANTHROPIC_API_KEY)" />
+              OpenAI API:{" "}
+              <StatusBadge ok={status.openaiConfigured} okLabel="Yapılandırılmış" badLabel="Eksik (OPENAI_API_KEY)" />
             </li>
             <li>
               Supabase Veritabanı:{" "}

@@ -1,20 +1,20 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-let cached: Anthropic | null = null;
+let cached: OpenAI | null = null;
 
-function getClient(): Anthropic {
+function getClient(): OpenAI {
   if (cached) return cached;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "ANTHROPIC_API_KEY tanımlı değil. Makale üretimi için bu anahtar zorunludur."
+      "OPENAI_API_KEY tanımlı değil. Makale üretimi için bu anahtar zorunludur."
     );
   }
-  cached = new Anthropic({ apiKey });
+  cached = new OpenAI({ apiKey });
   return cached;
 }
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
+const MODEL = process.env.OPENAI_MODEL || "gpt-5.1";
 
 /** Bir ajanı çalıştırır ve düz metin (markdown) çıktı döndürür. */
 export async function runAgentText(params: {
@@ -23,18 +23,16 @@ export async function runAgentText(params: {
   maxTokens?: number;
 }): Promise<string> {
   const client = getClient();
-  const response = await client.messages.create({
+  const response = await client.chat.completions.create({
     model: MODEL,
-    max_tokens: params.maxTokens ?? 4000,
-    system: params.system,
-    messages: [{ role: "user", content: params.prompt }]
+    max_completion_tokens: params.maxTokens ?? 4000,
+    messages: [
+      { role: "system", content: params.system },
+      { role: "user", content: params.prompt }
+    ]
   });
 
-  return response.content
-    .filter((block): block is Anthropic.TextBlock => block.type === "text")
-    .map((block) => block.text)
-    .join("\n")
-    .trim();
+  return (response.choices[0]?.message?.content || "").trim();
 }
 
 function extractJsonBlock(raw: string): string {

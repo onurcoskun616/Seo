@@ -1,4 +1,4 @@
-import { runAgentJSON } from "@/lib/anthropic";
+import { runAgentJSON } from "@/lib/llm";
 import { buildGroundingText, describeRequest } from "./context";
 import { GenerateArticleInput, GroundedFacts, StrategistPlan } from "./types";
 

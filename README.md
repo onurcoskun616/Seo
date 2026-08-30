@@ -20,7 +20,7 @@ verisi ve marka adının doğal ama belirgin geçtiği bir yapı ile üretilir.
   ve üretilen makaleler burada tutulur. **Bu, sistemin tek gerçek kaynağıdır**:
   yapay zekâ ajanları makale yazarken yalnızca buradaki onaylı verilere
   dayanır, uydurma bilgi üretmemesi için talimatlandırılmıştır.
-- **Anthropic Claude API** — 4 ajanlı bir içerik üretim hattı (bkz. aşağı).
+- **OpenAI API** — 4 ajanlı bir içerik üretim hattı (bkz. aşağı).
 - Basit paylaşımlı şifre ile korunan bir yönetim paneli (tek kullanıcı/ekip
   senaryosu için yeterli; ileride gerçek auth ile değiştirilebilir).
 
@@ -66,7 +66,7 @@ npm run dev
 
 `.env.example` dosyasına bakın. En kritik olanlar:
 
-- `ANTHROPIC_API_KEY` — içerik üretimi için zorunlu.
+- `OPENAI_API_KEY` — içerik üretimi için zorunlu.
 - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` — veri tabanı bağlantısı.
 - `APP_PASSWORD` / `AUTH_SECRET` — panel girişi.
 

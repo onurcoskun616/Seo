@@ -1,4 +1,4 @@
-import { runAgentText } from "@/lib/anthropic";
+import { runAgentText } from "@/lib/llm";
 import { buildGroundingText, GROUNDING_RULE } from "./context";
 import { parseBulletList, parseQAList, parseSections } from "./sections";
 import { EditorResult, GroundedFacts, StrategistPlan } from "./types";

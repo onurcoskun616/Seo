@@ -1,4 +1,4 @@
-import { runAgentText } from "@/lib/anthropic";
+import { runAgentText } from "@/lib/llm";
 import { AUDIENCE_LABELS } from "@/lib/types";
 import { buildGroundingText, describeRequest, GROUNDING_RULE } from "./context";
 import { GenerateArticleInput, GroundedFacts, StrategistPlan } from "./types";
