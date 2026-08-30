@@ -13,7 +13,9 @@ const VALID_TYPES: ArticleType[] = [
   "campus_overview",
   "parent_guide",
   "vocational_school_explainer",
-  "comparison"
+  "comparison",
+  "lgs_guide",
+  "student_achievements"
 ];
 const VALID_AUDIENCES: Audience[] = ["ogrenci_9_10", "veli", "genel"];
 
@@ -36,9 +38,25 @@ export async function POST(req: NextRequest) {
       extraInstructions: body.extraInstructions || undefined
     };
 
-    const result = await runArticlePipeline(input);
-
     const supabase = getSupabaseServer();
+
+    if (input.articleType === "student_achievements") {
+      const { count, error: countErr } = await supabase
+        .from("achievements")
+        .select("*", { count: "exact", head: true });
+      if (countErr) throw countErr;
+      if (!count) {
+        return NextResponse.json(
+          {
+            error:
+              "Bilgi bankasında henüz öğrenci başarısı/projesi kaydı yok. Bu makale türünü uydurma bilgiyle doldurmamak için önce Bilgi Bankası > Başarılar sekmesinden en az bir kayıt ekleyin."
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    const result = await runArticlePipeline(input);
 
     let slug = result.slug;
     for (let attempt = 0; attempt < 5; attempt++) {

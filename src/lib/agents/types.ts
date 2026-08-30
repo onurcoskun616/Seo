@@ -1,4 +1,4 @@
-import { ArticleType, Audience, Campus, Department, SchoolIdentity } from "@/lib/types";
+import { Achievement, ArticleType, Audience, Campus, Department, SchoolIdentity } from "@/lib/types";
 
 export interface GroundedFacts {
   identity: SchoolIdentity;
@@ -6,6 +6,7 @@ export interface GroundedFacts {
   targetCampus: Campus | null;
   allDepartments: Department[];
   allCampuses: Campus[];
+  achievements: Achievement[];
 }
 
 export interface GenerateArticleInput {

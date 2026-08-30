@@ -35,13 +35,34 @@ export interface Department {
   success_stories: string | null;
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  category: "sportif" | "proje" | "akademik" | "yarisma" | "diger";
+  description: string | null;
+  achievement_date: string | null;
+  department_id: string | null;
+  campus_id: string | null;
+  source_url: string | null;
+}
+
+export const ACHIEVEMENT_CATEGORY_LABELS: Record<Achievement["category"], string> = {
+  sportif: "Sportif Başarı",
+  proje: "Proje",
+  akademik: "Akademik Başarı",
+  yarisma: "Yarışma",
+  diger: "Diğer"
+};
+
 export type ArticleType =
   | "school_identity"
   | "department_overview"
   | "campus_overview"
   | "parent_guide"
   | "vocational_school_explainer"
-  | "comparison";
+  | "comparison"
+  | "lgs_guide"
+  | "student_achievements";
 
 export type Audience = "ogrenci_9_10" | "veli" | "genel";
 
@@ -82,7 +103,9 @@ export const ARTICLE_TYPE_LABELS: Record<ArticleType, string> = {
   campus_overview: "Kampüs Tanıtımı",
   parent_guide: "Veli Rehberi (Okul Seçimi)",
   vocational_school_explainer: "Meslek Lisesi Nedir? (Genel Bilgilendirme)",
-  comparison: "Karşılaştırma / Neden Topkapı Okulları"
+  comparison: "Karşılaştırma / Okul Seçim Kriterleri",
+  lgs_guide: "LGS Süreci ve Okul Seçimi Rehberi",
+  student_achievements: "Öğrenci Başarıları / Projeler / Sportif Başarılar"
 };
 
 export const AUDIENCE_LABELS: Record<Audience, string> = {

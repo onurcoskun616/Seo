@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Campus, Department, SchoolIdentity } from "@/lib/types";
+import {
+  ACHIEVEMENT_CATEGORY_LABELS,
+  Achievement,
+  Campus,
+  Department,
+  SchoolIdentity
+} from "@/lib/types";
 
-type Tab = "identity" | "campuses" | "departments";
+type Tab = "identity" | "campuses" | "departments" | "achievements";
 
 export default function KbPage() {
   const [tab, setTab] = useState<Tab>("identity");
@@ -24,7 +30,8 @@ export default function KbPage() {
           [
             ["identity", "Okul Kimliği"],
             ["campuses", "Kampüsler"],
-            ["departments", "Bölümler / Alanlar"]
+            ["departments", "Bölümler / Alanlar"],
+            ["achievements", "Başarılar"]
           ] as [Tab, string][]
         ).map(([value, label]) => (
           <button
@@ -44,6 +51,7 @@ export default function KbPage() {
       {tab === "identity" && <IdentityForm />}
       {tab === "campuses" && <CampusesManager />}
       {tab === "departments" && <DepartmentsManager />}
+      {tab === "achievements" && <AchievementsManager />}
     </div>
   );
 }
@@ -478,6 +486,193 @@ function DepartmentsManager() {
         ))}
         {departments.length === 0 && (
           <p className="text-sm text-gray-500">Henüz bölüm/alan eklenmedi.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function emptyAchievement(): Partial<Achievement> {
+  return {
+    title: "",
+    category: "diger",
+    description: "",
+    achievement_date: "",
+    department_id: null,
+    campus_id: null,
+    source_url: ""
+  };
+}
+
+function AchievementsManager() {
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [editing, setEditing] = useState<Partial<Achievement> | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  function refresh() {
+    return Promise.all([
+      fetch("/api/kb/achievements").then((r) => r.json()),
+      fetch("/api/kb/departments").then((r) => r.json()),
+      fetch("/api/kb/campuses").then((r) => r.json())
+    ]).then(([a, d, c]) => {
+      setAchievements(a.achievements || []);
+      setDepartments(d.departments || []);
+      setCampuses(c.campuses || []);
+    });
+  }
+
+  useEffect(() => {
+    refresh().finally(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    if (!editing) return;
+    const isNew = !editing.id;
+    const url = isNew ? "/api/kb/achievements" : `/api/kb/achievements/${editing.id}`;
+    const res = await fetch(url, {
+      method: isNew ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editing)
+    });
+    if (!res.ok) {
+      alert((await res.json()).error || "Hata");
+      return;
+    }
+    setEditing(null);
+    refresh();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Bu kaydı silmek istediğinize emin misiniz?")) return;
+    await fetch(`/api/kb/achievements/${id}`, { method: "DELETE" });
+    refresh();
+  }
+
+  if (loading) return <p className="text-sm text-gray-500">Yükleniyor...</p>;
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
+        "Öğrenci Başarıları / Projeler / Sportif Başarılar" makale türü SADECE buradaki
+        kayıtlara dayanarak yazılır — böylece yapay zekâ hiçbir yarışma/ödül uydurmaz.
+      </p>
+      <div className="flex justify-end">
+        <button className="btn-primary" onClick={() => setEditing(emptyAchievement())}>
+          + Yeni Başarı / Proje
+        </button>
+      </div>
+
+      {editing && (
+        <div className="card space-y-4 p-6">
+          <TextField label="Başlık" value={editing.title || ""} onChange={(v) => setEditing({ ...editing, title: v })} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Kategori</label>
+              <select
+                className="input"
+                value={editing.category || "diger"}
+                onChange={(e) =>
+                  setEditing({ ...editing, category: e.target.value as Achievement["category"] })
+                }
+              >
+                {Object.entries(ACHIEVEMENT_CATEGORY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Tarih</label>
+              <input
+                type="date"
+                className="input"
+                value={editing.achievement_date || ""}
+                onChange={(e) => setEditing({ ...editing, achievement_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">İlgili Bölüm/Alan (opsiyonel)</label>
+              <select
+                className="input"
+                value={editing.department_id || ""}
+                onChange={(e) => setEditing({ ...editing, department_id: e.target.value || null })}
+              >
+                <option value="">Yok</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">İlgili Kampüs (opsiyonel)</label>
+              <select
+                className="input"
+                value={editing.campus_id || ""}
+                onChange={(e) => setEditing({ ...editing, campus_id: e.target.value || null })}
+              >
+                <option value="">Yok</option>
+                {campuses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <TextField
+            label="Açıklama"
+            value={editing.description || ""}
+            onChange={(v) => setEditing({ ...editing, description: v })}
+            textarea
+          />
+          <TextField
+            label="Kaynak Linki (opsiyonel, haber/duyuru vb.)"
+            value={editing.source_url || ""}
+            onChange={(v) => setEditing({ ...editing, source_url: v })}
+          />
+          <div className="flex gap-3">
+            <button className="btn-primary" onClick={save}>
+              Kaydet
+            </button>
+            <button className="btn-secondary" onClick={() => setEditing(null)}>
+              Vazgeç
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {achievements.map((a) => (
+          <div key={a.id} className="card p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">{a.title}</h3>
+                <p className="text-xs text-gray-500">
+                  {ACHIEVEMENT_CATEGORY_LABELS[a.category]}
+                  {a.achievement_date ? ` · ${a.achievement_date}` : ""}
+                </p>
+              </div>
+              <div className="flex gap-2 text-xs">
+                <button className="text-brand-600 hover:underline" onClick={() => setEditing(a)}>
+                  Düzenle
+                </button>
+                <button className="text-red-600 hover:underline" onClick={() => remove(a.id)}>
+                  Sil
+                </button>
+              </div>
+            </div>
+            {a.description && <p className="mt-2 text-sm text-gray-600">{a.description}</p>}
+          </div>
+        ))}
+        {achievements.length === 0 && (
+          <p className="text-sm text-gray-500">Henüz başarı/proje eklenmedi.</p>
         )}
       </div>
     </div>

@@ -76,9 +76,14 @@ npm run dev
    bölümlerini/alanlarını (her biri için müfredat öne çıkanları, mezuniyet
    sonrası kariyer imkanları, üniversite/bölüm eşleşmeleri) girin. Makalelerin
    doğruluğu tamamen buradaki verinin doğruluğuna bağlıdır.
-2. **Yeni Makale** (`/articles/new`) sayfasından makale türünü (bölüm tanıtımı,
-   kampüs tanıtımı, veli rehberi, "meslek lisesi nedir" vb.), hedef
-   bölüm/kampüsü ve hedef kitleyi seçip üretimi başlatın.
+2. **Yeni Makale** (`/articles/new`) sayfasından makale türünü, hedef
+   bölüm/kampüsü ve hedef kitleyi seçip üretimi başlatın. Desteklenen türler:
+   okul kimliği, bölüm/alan tanıtımı, kampüs tanıtımı, veli rehberi,
+   "meslek lisesi nedir", okul seçim kriterleri/karşılaştırma (rakip okul
+   hakkında somut iddia üretmez, sadece nötr kriterler + Topkapı'nın onaylı
+   güçlü yönleri), LGS süreci rehberi (yıl bazlı/değişken bilgi vermez) ve
+   öğrenci başarıları/projeler/sportif başarılar (yalnızca Bilgi Bankası >
+   Başarılar sekmesindeki kayıtlara dayanır; kayıt yoksa üretim engellenir).
 3. Üretilen makaleyi `/articles/[id]` sayfasında inceleyin, gerekirse markdown
    içeriğini düzenleyin, SEO/JSON-LD önizlemesini kontrol edin.
 4. **Dışa Aktarım / Yayınlama**: Markdown, HTML ve JSON-LD'yi kopyalayıp

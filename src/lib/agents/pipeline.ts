@@ -1,6 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { markdownToHtml } from "@/lib/markdown";
-import { Campus, Department, SchoolIdentity } from "@/lib/types";
+import { Achievement, Campus, Department, SchoolIdentity } from "@/lib/types";
 import { runSeoStrategist } from "./seoStrategist";
 import { runContentExpert } from "./contentExpert";
 import { runEditorFactCheck } from "./editorFactCheck";
@@ -22,16 +22,26 @@ export interface PipelineResult {
 async function loadGroundedFacts(input: GenerateArticleInput): Promise<GroundedFacts> {
   const supabase = getSupabaseServer();
 
-  const [{ data: identityRows, error: identityErr }, { data: departments, error: deptErr }, { data: campuses, error: campErr }] =
-    await Promise.all([
-      supabase.from("school_identity").select("*").limit(1),
-      supabase.from("departments").select("*").order("name"),
-      supabase.from("campuses").select("*").order("name")
-    ]);
+  const [
+    { data: identityRows, error: identityErr },
+    { data: departments, error: deptErr },
+    { data: campuses, error: campErr },
+    { data: achievements, error: achErr }
+  ] = await Promise.all([
+    supabase.from("school_identity").select("*").limit(1),
+    supabase.from("departments").select("*").order("name"),
+    supabase.from("campuses").select("*").order("name"),
+    supabase
+      .from("achievements")
+      .select("*")
+      .order("achievement_date", { ascending: false })
+      .limit(40)
+  ]);
 
   if (identityErr) throw identityErr;
   if (deptErr) throw deptErr;
   if (campErr) throw campErr;
+  if (achErr) throw achErr;
 
   const identity = (identityRows?.[0] as SchoolIdentity) || {
     id: "",
@@ -49,6 +59,7 @@ async function loadGroundedFacts(input: GenerateArticleInput): Promise<GroundedF
 
   const allDepartments = (departments as Department[]) || [];
   const allCampuses = (campuses as Campus[]) || [];
+  const allAchievements = (achievements as Achievement[]) || [];
 
   return {
     identity,
@@ -57,7 +68,8 @@ async function loadGroundedFacts(input: GenerateArticleInput): Promise<GroundedF
       : null,
     targetCampus: input.campusId ? allCampuses.find((c) => c.id === input.campusId) || null : null,
     allDepartments,
-    allCampuses
+    allCampuses,
+    achievements: allAchievements
   };
 }
 

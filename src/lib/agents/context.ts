@@ -1,4 +1,4 @@
-import { ARTICLE_TYPE_LABELS, AUDIENCE_LABELS } from "@/lib/types";
+import { ACHIEVEMENT_CATEGORY_LABELS, ARTICLE_TYPE_LABELS, ArticleType, AUDIENCE_LABELS } from "@/lib/types";
 import { GenerateArticleInput, GroundedFacts } from "./types";
 
 function departmentBlock(d: GroundedFacts["allDepartments"][number]): string {
@@ -26,6 +26,17 @@ function campusBlock(c: GroundedFacts["allCampuses"][number]): string {
     c.address ? `Adres: ${c.address}` : null,
     c.facilities?.length ? `Olanaklar: ${c.facilities.join("; ")}` : null,
     c.description ? `Açıklama: ${c.description}` : null
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function achievementBlock(a: GroundedFacts["achievements"][number]): string {
+  return [
+    `### ${a.title}`,
+    `Kategori: ${ACHIEVEMENT_CATEGORY_LABELS[a.category]}`,
+    a.achievement_date ? `Tarih: ${a.achievement_date}` : null,
+    a.description ? `Açıklama: ${a.description}` : null
   ]
     .filter(Boolean)
     .join("\n");
@@ -78,17 +89,64 @@ export function buildGroundingText(facts: GroundedFacts): string {
     parts.push(facts.allCampuses.map(campusBlock).join("\n\n"));
   }
 
+  if (facts.achievements.length) {
+    parts.push("\n## ÖĞRENCİ BAŞARILARI / PROJELER (ONAYLI VERİ)");
+    parts.push(facts.achievements.map(achievementBlock).join("\n\n"));
+  }
+
   return parts.join("\n");
+}
+
+/**
+ * Bazı makale türleri (rakip okulla karşılaştırma, LGS gibi zamana bağlı
+ * konular, öğrenci başarıları gibi tamamen veri bankasına bağlı olması
+ * gereken konular) için ek, tür-özel güvenlik/kalite kuralları.
+ */
+export function typeSpecificGuidance(articleType: ArticleType): string {
+  switch (articleType) {
+    case "comparison":
+      return `
+BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: Bu bir "okul seçim kriterleri / karşılaştırma"
+makalesidir. Adı geçen ya da geçmeyen BAŞKA bir okul hakkında (program,
+başarı oranı, öğretmen sayısı, ücret, kadro vb.) TEK BİR somut/spesifik
+iddiada BULUNMA — bu okullar hakkında onaylı verin yok, yanlış veya
+karalayıcı bilgi vermemelisin. Bunun yerine "iyi bir meslek lisesi
+seçerken nelere bakılmalı" (atölye/kampüs imkanları, bölüm çeşitliliği,
+üniversite/kariyer imkanları, rehberlik desteği vb.) şeklinde NÖTR VE GENEL
+kriterler sun; her kriterde Topkapı Okulları'nın ONAYLI VERİDEKİ somut
+güçlü yönünü göster. Rakip okulları isim vererek eleştirme veya olumsuz
+kıyaslama yapma.`.trim();
+    case "lgs_guide":
+      return `
+BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: LGS (Liseye Geçiş Sınavı) süreci hakkında
+YALNIZCA genel, tartışmasız ve zamana bağlı olmayan bilgiler ver (sınavın
+amacı, tercih yapma mantığı, taban puan kavramı, meslek lisesi tercih
+etmenin ne anlama geldiği vb.). Sınav tarihleri, başvuru takvimi gibi
+YIL BAZLI/DEĞİŞKEN bilgileri KESİN TARİH vererek YAZMA; bunun yerine
+"güncel MEB takvimini takip edin" gibi ifadeler kullan. Topkapı
+Okulları'na özgü taban puan/kontenjan gibi bilgileri SADECE onaylı veride
+varsa kullan, yoksa açık yer tutucu bırak.`.trim();
+    case "student_achievements":
+      return `
+BU MAKALE TÜRÜ İÇİN ÖZEL KURAL: Bu makale SADECE "ÖĞRENCİ BAŞARILARI /
+PROJELER (ONAYLI VERİ)" başlığı altında listelenen gerçek kayıtlara
+dayanmalıdır. Listede olmayan hiçbir yarışma, ödül, proje veya sportif
+başarıyı UYDURMA. Listedeki başarıları kategori veya kronoloji bazlı
+gruplayarak ilham verici ama gerçekçi bir dille anlat.`.trim();
+    default:
+      return "";
+  }
 }
 
 export function describeRequest(input: GenerateArticleInput): string {
   return [
     `Makale türü: ${ARTICLE_TYPE_LABELS[input.articleType]}`,
     `Hedef kitle: ${AUDIENCE_LABELS[input.audience]}`,
-    input.extraInstructions ? `Ek talimat: ${input.extraInstructions}` : null
+    input.extraInstructions ? `Ek talimat: ${input.extraInstructions}` : null,
+    typeSpecificGuidance(input.articleType) || null
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("\n\n");
 }
 
 export const GROUNDING_RULE = `
