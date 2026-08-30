@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/apiUtil";
 import { requireRole } from "@/lib/authGuard";
+import { notifyPublishFailure } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     if (status === "success") {
       await supabase.from("articles").update({ status: "published" }).eq("id", params.id);
+    } else {
+      void notifyPublishFailure(
+        req,
+        (article as { title: string | null }).title || "(başlıksız)",
+        params.id,
+        responseSnippet || `HTTP ${statusCode}`
+      );
     }
 
     return NextResponse.json({ status, statusCode, responseSnippet });

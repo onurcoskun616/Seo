@@ -1,5 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { ArticleType, Audience, GenerationJob } from "@/lib/types";
+import { notifyBatchComplete } from "@/lib/notify";
 import { checkGenerationBlocked, createArticleRecord } from "./createArticle";
 import { GenerateArticleInput } from "./types";
 
@@ -77,12 +78,18 @@ async function processBatchJob(jobId: string, input: StartBatchInput): Promise<v
       .eq("id", jobId);
   }
 
-  await supabase
+  const { data: finished } = await supabase
     .from("generation_jobs")
     .update({
       status: failed.length && !createdIds.length ? "error" : "done",
       error: failed.length ? `${failed.length} hedef başarısız oldu.` : null,
       updated_at: new Date().toISOString()
     })
-    .eq("id", jobId);
+    .eq("id", jobId)
+    .select()
+    .single();
+
+  if (finished) {
+    void notifyBatchComplete(finished as GenerationJob);
+  }
 }

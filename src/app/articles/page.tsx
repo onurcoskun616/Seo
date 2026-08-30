@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ARTICLE_TYPE_LABELS, ArticleType, AUDIENCE_LABELS, Audience } from "@/lib/types";
+import { QualityScore } from "@/lib/quality";
+import QualityBadge from "@/components/QualityBadge";
 
 interface ArticleRow {
   id: string;
@@ -11,6 +13,7 @@ interface ArticleRow {
   title: string | null;
   slug: string | null;
   status: "draft" | "approved" | "published";
+  quality_score: QualityScore | null;
   created_at: string;
 }
 
@@ -82,9 +85,12 @@ export default function ArticlesPage() {
                 {new Date(a.created_at).toLocaleDateString("tr-TR")}
               </p>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[a.status]}`}>
-              {STATUS_LABELS[a.status]}
-            </span>
+            <div className="flex items-center gap-2">
+              <QualityBadge score={a.quality_score} />
+              <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[a.status]}`}>
+                {STATUS_LABELS[a.status]}
+              </span>
+            </div>
           </Link>
         ))}
       </div>

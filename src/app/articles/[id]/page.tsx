@@ -8,6 +8,7 @@ import {
   AUDIENCE_LABELS,
   PublishConfig
 } from "@/lib/types";
+import QualityBadge from "@/components/QualityBadge";
 
 type Tab = "content" | "seo" | "trace" | "history" | "publish";
 
@@ -97,7 +98,10 @@ export default function ArticleDetailPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">{title || "(başlıksız)"}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-gray-900">{title || "(başlıksız)"}</h1>
+            <QualityBadge score={article.quality_score} />
+          </div>
           <p className="mt-1 text-xs text-gray-500">
             {ARTICLE_TYPE_LABELS[article.article_type]} · {AUDIENCE_LABELS[article.audience]} · Durum:{" "}
             <strong>{STATUS_LABELS[article.status] || article.status}</strong>
@@ -174,6 +178,28 @@ export default function ArticleDetailPage() {
 
       {tab === "seo" && (
         <div className="card space-y-4 p-6">
+          {article.quality_score && (
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="label mb-0">Kalite Skoru</p>
+                <QualityBadge score={article.quality_score} />
+                <span className="text-xs text-gray-400">
+                  Okunabilirlik: {article.quality_score.readabilityLabel} (
+                  {article.quality_score.readability}/100) · Anahtar kelime yoğunluğu: %
+                  {article.quality_score.keywordDensityPercent} · {article.quality_score.wordCount} kelime
+                </span>
+              </div>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {article.quality_score.checks.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <span className={c.ok ? "text-green-600" : "text-red-500"}>{c.ok ? "✓" : "✗"}</span>
+                    <span className="text-gray-700">{c.label}</span>
+                    <span className="text-gray-400">— {c.detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <p className="label">AI Cevap Özeti (yapay zekâ arama motorları için)</p>
             <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand-900">

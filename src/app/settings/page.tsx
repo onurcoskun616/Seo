@@ -251,7 +251,111 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {currentUser?.role === "admin" && <NotificationsManager />}
       {currentUser?.role === "admin" && <UsersManager />}
+    </div>
+  );
+}
+
+function NotificationsManager() {
+  const [webhook, setWebhook] = useState("");
+  const [notifyReview, setNotifyReview] = useState(true);
+  const [notifyPublishFailure, setNotifyPublishFailure] = useState(true);
+  const [notifyBatch, setNotifyBatch] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/notifications")
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d.settings;
+        if (s) {
+          setWebhook(s.slack_webhook_url || "");
+          setNotifyReview(s.notify_on_review);
+          setNotifyPublishFailure(s.notify_on_publish_failure);
+          setNotifyBatch(s.notify_on_batch_complete);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/settings/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slack_webhook_url: webhook,
+          notify_on_review: notifyReview,
+          notify_on_publish_failure: notifyPublishFailure,
+          notify_on_batch_complete: notifyBatch
+        })
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setMessage("Kaydedildi.");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Hata.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function sendTest() {
+    setMessage(null);
+    const res = await fetch("/api/settings/notifications/test", { method: "POST" });
+    const data = await res.json();
+    setMessage(res.ok ? "Test bildirimi gönderildi, Slack kanalınızı kontrol edin." : data.error || "Hata");
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="card space-y-4 p-6">
+      <h2 className="text-sm font-semibold text-gray-800">Bildirimler (Slack)</h2>
+      <p className="text-xs text-gray-500">
+        Slack'te bir "Incoming Webhook" oluşturup URL'sini buraya yapıştırın. Ücretsizdir ve
+        Slack workspace ayarlarından (Apps → Incoming Webhooks) birkaç dakikada kurulur.
+      </p>
+      <div>
+        <label className="label">Slack Webhook URL</label>
+        <input
+          className="input"
+          placeholder="https://hooks.slack.com/services/..."
+          value={webhook}
+          onChange={(e) => setWebhook(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2 text-sm">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={notifyReview} onChange={(e) => setNotifyReview(e.target.checked)} />
+          Bir makale incelemeye gönderildiğinde bildir
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={notifyPublishFailure}
+            onChange={(e) => setNotifyPublishFailure(e.target.checked)}
+          />
+          Yayınlama başarısız olduğunda bildir
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={notifyBatch} onChange={(e) => setNotifyBatch(e.target.checked)} />
+          Toplu üretim işi tamamlandığında bildir
+        </label>
+      </div>
+      {message && <p className="text-sm text-gray-600">{message}</p>}
+      <div className="flex gap-2">
+        <button className="btn-primary" onClick={save} disabled={saving}>
+          {saving ? "Kaydediliyor..." : "Kaydet"}
+        </button>
+        <button className="btn-secondary" onClick={sendTest} disabled={!webhook}>
+          Test Gönder
+        </button>
+      </div>
     </div>
   );
 }

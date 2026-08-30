@@ -3,6 +3,8 @@ import { getSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/apiUtil";
 import { markdownToHtml } from "@/lib/markdown";
 import { getSessionFromRequest } from "@/lib/auth";
+import { scoreArticle } from "@/lib/quality";
+import { notifyReviewRequested } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -47,22 +49,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       typeof body.meta_description === "string" ||
       typeof body.content_markdown === "string";
 
-    if (contentChanging) {
-      const { data: current } = await supabase
-        .from("articles")
-        .select("title, meta_description, content_markdown, status")
-        .eq("id", params.id)
-        .single();
-      if (current) {
-        await supabase.from("article_revisions").insert({
-          article_id: params.id,
-          title: current.title,
-          meta_description: current.meta_description,
-          content_markdown: current.content_markdown,
-          status: current.status,
-          edited_by: session.name
-        });
-      }
+    const { data: current } = await supabase
+      .from("articles")
+      .select("title, meta_description, content_markdown, status, faq_json, agent_trace")
+      .eq("id", params.id)
+      .single();
+
+    if (contentChanging && current) {
+      await supabase.from("article_revisions").insert({
+        article_id: params.id,
+        title: current.title,
+        meta_description: current.meta_description,
+        content_markdown: current.content_markdown,
+        status: current.status,
+        edited_by: session.name
+      });
     }
 
     const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -74,6 +75,17 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       payload.content_html = markdownToHtml(body.content_markdown);
     }
 
+    if (contentChanging && current) {
+      const agentTrace = current.agent_trace as { strategistPlan?: { primaryKeyword?: string } } | null;
+      payload.quality_score = scoreArticle({
+        title: (payload.title as string) ?? current.title ?? "",
+        metaDescription: (payload.meta_description as string) ?? current.meta_description ?? "",
+        contentMarkdown: (payload.content_markdown as string) ?? current.content_markdown ?? "",
+        primaryKeyword: agentTrace?.strategistPlan?.primaryKeyword,
+        faqCount: Array.isArray(current.faq_json) ? current.faq_json.length : 0
+      });
+    }
+
     const { data, error } = await supabase
       .from("articles")
       .update(payload)
@@ -81,6 +93,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       .select()
       .single();
     if (error) throw error;
+
+    if (body.status === "in_review" && current?.status !== "in_review") {
+      void notifyReviewRequested(req, data);
+    }
+
     return NextResponse.json({ article: data });
   } catch (err) {
     return errorResponse(err);

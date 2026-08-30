@@ -1,5 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { Article, ArticleType } from "@/lib/types";
+import { scoreArticle } from "@/lib/quality";
 import { runArticlePipeline } from "./pipeline";
 import { GenerateArticleInput } from "./types";
 
@@ -37,6 +38,14 @@ export async function createArticleRecord(input: GenerateArticleInput): Promise<
     slug = `${result.slug}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
+  const qualityScore = scoreArticle({
+    title: result.title,
+    metaDescription: result.metaDescription,
+    contentMarkdown: result.contentMarkdown,
+    primaryKeyword: result.agentTrace.strategistPlan?.primaryKeyword,
+    faqCount: result.faqJson.length
+  });
+
   const { data, error } = await supabase
     .from("articles")
     .insert({
@@ -53,6 +62,7 @@ export async function createArticleRecord(input: GenerateArticleInput): Promise<
       json_ld: result.jsonLd,
       ai_answer_snippet: result.aiAnswerSnippet,
       image_suggestions: result.imageSuggestions,
+      quality_score: qualityScore,
       status: "draft",
       agent_trace: result.agentTrace,
       extra_instructions: input.extraInstructions ?? null

@@ -88,6 +88,7 @@ export interface Article {
   json_ld: Record<string, unknown> | null;
   ai_answer_snippet: string | null;
   image_suggestions: ImageSuggestion[] | null;
+  quality_score: import("./quality").QualityScore | null;
   status: "draft" | "in_review" | "approved" | "published";
   agent_trace: Record<string, unknown> | null;
   extra_instructions: string | null;
@@ -108,6 +109,21 @@ export interface GenerationJob {
   error: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface EditorialCalendarItem {
+  id: string;
+  title: string;
+  planned_date: string;
+  article_type: ArticleType;
+  audience: Audience;
+  target_department_id: string | null;
+  target_campus_id: string | null;
+  assigned_to: string | null;
+  notes: string | null;
+  status: "planned" | "in_progress" | "done";
+  linked_article_id: string | null;
+  created_at: string;
 }
 
 export interface PublishConfig {

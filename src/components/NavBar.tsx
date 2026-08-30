@@ -9,6 +9,7 @@ const links = [
   { href: "/", label: "Panel" },
   { href: "/kb", label: "Bilgi Bankası" },
   { href: "/articles", label: "Makaleler" },
+  { href: "/calendar", label: "Takvim" },
   { href: "/research", label: "Konu Araştırma" },
   { href: "/performance", label: "Performans" },
   { href: "/settings", label: "Ayarlar" }

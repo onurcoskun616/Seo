@@ -143,3 +143,15 @@ npm run dev
   eklerken "WordPress şablonunu doldur" butonu, WP REST API
   (`/wp-json/wp/v2/posts`) ve Application Password auth header'ını otomatik
   doldurur.
+- **Makale kalite skoru**: her makale için Türkçe okunabilirlik (Ateşman
+  formülü), anahtar kelime yoğunluğu ve SEO kontrol listesi (başlık/meta
+  uzunluğu, kelime sayısı, H2 sayısı, FAQ, iç link) otomatik hesaplanır;
+  makale listesinde ve detayında rozet olarak gösterilir. İçerik her
+  düzenlendiğinde yeniden hesaplanır.
+- **Editöryal Takvim** (`/calendar`): henüz üretilmemiş makaleleri tarih,
+  tür, atanan kişi ve notlarla planlayın; tarihi geldiğinde tek tıkla
+  makaleyi üretip otomatik bağlayın.
+- **Bildirimler** (`Ayarlar`, Slack): bir Slack Incoming Webhook URL'si
+  tanımlarsanız, bir makale incelemeye gönderildiğinde, yayın başarısız
+  olduğunda veya toplu üretim tamamlandığında Slack kanalınıza otomatik
+  bildirim gider.
