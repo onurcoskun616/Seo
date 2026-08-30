@@ -2,7 +2,14 @@
 // (globalThis.crypto.subtle) kullanılıyor; middleware her zaman Edge Runtime'da çalışır.
 
 export const AUTH_COOKIE_NAME = "topkapi_session";
-const SIGNED_MESSAGE = "topkapi-authenticated";
+
+export type PanelRole = "admin" | "editor" | "reviewer";
+
+export interface SessionPayload {
+  sub: string; // panel_users.id veya "app_password" (paylaşımlı şifre girişi)
+  role: PanelRole;
+  name: string;
+}
 
 async function hmacHex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
@@ -28,19 +35,73 @@ function constantTimeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-/** Verilen şifre doğruysa, cookie'ye konacak imzalı token'ı döndürür. */
-export async function createSessionToken(password: string): Promise<string | null> {
-  const expected = process.env.APP_PASSWORD;
-  if (!expected || password !== expected) return null;
+function toBase64Url(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function fromBase64Url(b64url: string): string {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(b64);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function getSecret(): string {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET tanımlı değil.");
-  return hmacHex(secret, SIGNED_MESSAGE);
+  return secret;
+}
+
+/** Verilen payload için imzalı, cookie'ye konacak bir session token üretir. */
+export async function createSessionToken(payload: SessionPayload): Promise<string> {
+  const secret = getSecret();
+  const body = toBase64Url(JSON.stringify(payload));
+  const signature = await hmacHex(secret, body);
+  return `${body}.${signature}`;
+}
+
+/**
+ * Token'ı doğrular ve geçerliyse payload'ı döndürür; imza uyuşmuyorsa veya
+ * bozuksa null döner. AUTH_SECRET tanımlı değilse de null döner (edge runtime
+ * ortamlarında process.env erişimi olmayabilir, bu durumda güvenli varsayılan
+ * her zaman "yetkisiz"dir).
+ */
+export async function verifySessionToken(
+  token: string | undefined | null
+): Promise<SessionPayload | null> {
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [body, signature] = parts;
+
+  let secret: string;
+  try {
+    secret = getSecret();
+  } catch {
+    return null;
+  }
+
+  const expected = await hmacHex(secret, body);
+  if (!constantTimeEqual(signature, expected)) return null;
+
+  try {
+    return JSON.parse(fromBase64Url(body)) as SessionPayload;
+  } catch {
+    return null;
+  }
 }
 
 export async function isValidSessionToken(token: string | undefined | null): Promise<boolean> {
-  if (!token) return false;
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) return false;
-  const expected = await hmacHex(secret, SIGNED_MESSAGE);
-  return constantTimeEqual(token, expected);
+  return (await verifySessionToken(token)) !== null;
+}
+
+/** API route'larında (NextRequest alan) oturum sahibini okumak için yardımcı. */
+export async function getSessionFromRequest(req: {
+  cookies: { get(name: string): { value: string } | undefined };
+}): Promise<SessionPayload | null> {
+  const token = req.cookies.get(AUTH_COOKIE_NAME)?.value;
+  return verifySessionToken(token);
 }

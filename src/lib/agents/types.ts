@@ -33,6 +33,12 @@ export interface EditorResult {
   flaggedIssues: string[];
 }
 
+export interface ImageSuggestion {
+  placement: string;
+  altText: string;
+  description: string;
+}
+
 export interface GeoResult {
   title: string;
   metaDescription: string;
@@ -40,6 +46,7 @@ export interface GeoResult {
   jsonLd: Record<string, unknown>;
   aiAnswerSnippet: string;
   internalLinkSuggestions: string[];
+  imageSuggestions: ImageSuggestion[];
 }
 
 export interface AgentTrace {

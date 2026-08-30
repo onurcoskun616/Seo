@@ -67,6 +67,12 @@ export type ArticleType =
 
 export type Audience = "ogrenci_9_10" | "veli" | "genel";
 
+export interface ImageSuggestion {
+  placement: string;
+  altText: string;
+  description: string;
+}
+
 export interface Article {
   id: string;
   article_type: ArticleType;
@@ -81,9 +87,25 @@ export interface Article {
   faq_json: { question: string; answer: string }[] | null;
   json_ld: Record<string, unknown> | null;
   ai_answer_snippet: string | null;
-  status: "draft" | "approved" | "published";
+  image_suggestions: ImageSuggestion[] | null;
+  status: "draft" | "in_review" | "approved" | "published";
   agent_trace: Record<string, unknown> | null;
   extra_instructions: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GenerationJob {
+  id: string;
+  article_type: ArticleType;
+  audience: Audience;
+  target_type: "department" | "campus" | "none";
+  target_ids: string[];
+  total: number;
+  status: "pending" | "running" | "done" | "error";
+  created_article_ids: string[];
+  failed_targets: { targetId: string; error: string }[];
+  error: string | null;
   created_at: string;
   updated_at: string;
 }

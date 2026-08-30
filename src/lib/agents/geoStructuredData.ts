@@ -48,6 +48,11 @@ Aşağıdaki alanları içeren bir JSON nesnesi döndür:
   "slug": string (kısa, kebab-case, İngilizce karakterlerle, Türkçe karakter içermesin),
   "aiAnswerSnippet": string (2-3 cümle, yukarıda açıklanan özellikte),
   "internalLinkSuggestions": string[] (bu makaleden bağlanabilecek 3-5 olası iç sayfa/konu başlığı),
+  "imageSuggestions": [
+    { "placement": string (görselin makalede nereye konacağı, ör. "Giriş bölümünün altı"),
+      "altText": string (SEO uyumlu, açıklayıcı alt metin, marka adını gerektiğinde içersin),
+      "description": string (görselde ne olması gerektiğinin kısa tarifi, ör. "Atölyede çalışan öğrenciler") }
+  ] (3-5 adet, gerçek çekilmiş/tasarlanacak fotoğraf/görsel önerisi; hiçbir görsel üretilmeyecek, sadece öneri),
   "jsonLd": {
     "@context": "https://schema.org",
     "@graph": [
@@ -74,6 +79,8 @@ Aşağıdaki alanları içeren bir JSON nesnesi döndür:
   } else {
     result.slug = slugify(result.slug);
   }
+  result.imageSuggestions = result.imageSuggestions || [];
+  result.internalLinkSuggestions = result.internalLinkSuggestions || [];
 
   return result;
 }

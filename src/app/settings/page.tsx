@@ -2,10 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { PublishConfig } from "@/lib/types";
+import { ROLE_LABELS_CLIENT } from "@/lib/roleLabels";
+
+interface PanelUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
 
 interface Status {
   openaiConfigured: boolean;
   supabaseConfigured: boolean;
+  gscConfigured: boolean;
   model: string;
   siteUrl: string;
 }
@@ -26,6 +36,7 @@ export default function SettingsPage() {
   const [configs, setConfigs] = useState<PublishConfig[]>([]);
   const [editing, setEditing] = useState<ReturnType<typeof emptyConfig> | null>(null);
   const [fieldMappingRaw, setFieldMappingRaw] = useState("{}");
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: string } | null>(null);
 
   function refresh() {
     return fetch("/api/publish-configs")
@@ -37,8 +48,26 @@ export default function SettingsPage() {
     fetch("/api/settings/status")
       .then((r) => r.json())
       .then(setStatus);
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setCurrentUser(d.user));
     refresh();
   }, []);
+
+  function useWordpressPreset() {
+    if (!editing || !status) return;
+    setEditing({
+      ...editing,
+      name: editing.name || "WordPress",
+      endpoint_url: `${status.siteUrl.replace(/\/$/, "")}/wp-json/wp/v2/posts`,
+      http_method: "POST",
+      auth_header_name: "Authorization",
+      auth_header_value: "Basic BASE64(kullanici_adi:uygulama_sifresi)"
+    });
+    setFieldMappingRaw(
+      JSON.stringify({ title: "title", content: "content_html", excerpt: "meta_description", slug: "slug" }, null, 2)
+    );
+  }
 
   async function save() {
     if (!editing) return;
@@ -89,6 +118,14 @@ export default function SettingsPage() {
               Supabase Veritabanı:{" "}
               <StatusBadge ok={status.supabaseConfigured} okLabel="Bağlı" badLabel="Eksik (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)" />
             </li>
+            <li>
+              Google Search Console:{" "}
+              <StatusBadge
+                ok={status.gscConfigured}
+                okLabel="Bağlı"
+                badLabel="Yapılandırılmamış (opsiyonel)"
+              />
+            </li>
             <li>Kullanılan model: <code>{status.model}</code></li>
             <li>Site URL: <code>{status.siteUrl}</code></li>
             <li>
@@ -96,7 +133,21 @@ export default function SettingsPage() {
                 llms.txt önizlemesini görüntüle →
               </a>
             </li>
+            <li>
+              <a href="/sitemap.xml" target="_blank" className="text-brand-600 hover:underline">
+                sitemap.xml önizlemesini görüntüle →
+              </a>
+            </li>
           </ul>
+        )}
+        {status && !status.gscConfigured && (
+          <p className="mt-3 text-xs text-gray-400">
+            GSC kurulumu: bir Google Cloud servis hesabı oluşturun, Search Console API'yi
+            etkinleştirin, servis hesabı e-postasını Search Console mülkünüze "Tam" yetkiyle
+            ekleyin; ardından <code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code>,{" "}
+            <code>GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code> ve <code>GSC_SITE_URL</code> ortam
+            değişkenlerini Render'da tanımlayın.
+          </p>
         )}
       </div>
 
@@ -123,6 +174,9 @@ export default function SettingsPage() {
 
         {editing && (
           <div className="mb-4 space-y-3 rounded-lg border border-gray-200 p-4">
+            <button type="button" className="text-xs text-brand-600 hover:underline" onClick={useWordpressPreset}>
+              WordPress şablonunu doldur (REST API + Application Password)
+            </button>
             <input
               className="input"
               placeholder="Ad (örn. Topkapı CMS)"
@@ -195,6 +249,128 @@ export default function SettingsPage() {
             <p className="text-sm text-gray-500">Henüz yayın hedefi tanımlanmadı.</p>
           )}
         </div>
+      </div>
+
+      {currentUser?.role === "admin" && <UsersManager />}
+    </div>
+  );
+}
+
+function emptyUser() {
+  return { name: "", email: "", password: "", role: "editor" };
+}
+
+function UsersManager() {
+  const [users, setUsers] = useState<PanelUser[]>([]);
+  const [editing, setEditing] = useState<ReturnType<typeof emptyUser> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function refresh() {
+    return fetch("/api/users")
+      .then((r) => r.json())
+      .then((d) => setUsers(d.users || []));
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  async function save() {
+    if (!editing) return;
+    setError(null);
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editing)
+    });
+    if (!res.ok) {
+      setError((await res.json()).error || "Hata");
+      return;
+    }
+    setEditing(null);
+    refresh();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
+    await fetch(`/api/users/${id}`, { method: "DELETE" });
+    refresh();
+  }
+
+  return (
+    <div className="card p-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-800">Kullanıcılar</h2>
+        <button className="btn-secondary" onClick={() => setEditing(emptyUser())}>
+          + Yeni Kullanıcı
+        </button>
+      </div>
+      <p className="mb-4 text-xs text-gray-500">
+        <strong>Editör</strong> taslak oluşturup düzenleyebilir. <strong>İnceleyen/Onaylayan</strong>{" "}
+        ve <strong>Yönetici</strong> ayrıca makaleleri onaylayıp yayınlayabilir. Yönetici ek olarak
+        kullanıcı yönetebilir.
+      </p>
+
+      {editing && (
+        <div className="mb-4 space-y-3 rounded-lg border border-gray-200 p-4">
+          <input
+            className="input"
+            placeholder="Ad Soyad"
+            value={editing.name}
+            onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="E-posta"
+            type="email"
+            value={editing.email}
+            onChange={(e) => setEditing({ ...editing, email: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Şifre (en az 8 karakter)"
+            type="password"
+            value={editing.password}
+            onChange={(e) => setEditing({ ...editing, password: e.target.value })}
+          />
+          <select
+            className="input"
+            value={editing.role}
+            onChange={(e) => setEditing({ ...editing, role: e.target.value })}
+          >
+            {Object.entries(ROLE_LABELS_CLIENT).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div className="flex gap-2">
+            <button className="btn-primary" onClick={save}>
+              Kaydet
+            </button>
+            <button className="btn-secondary" onClick={() => setEditing(null)}>
+              Vazgeç
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {users.map((u) => (
+          <div key={u.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm">
+            <div>
+              <p className="font-medium text-gray-800">
+                {u.name} <span className="text-xs text-gray-400">({u.email})</span>
+              </p>
+              <p className="text-xs text-gray-500">{ROLE_LABELS_CLIENT[u.role] || u.role}</p>
+            </div>
+            <button className="text-red-600 hover:underline" onClick={() => remove(u.id)}>
+              Sil
+            </button>
+          </div>
+        ))}
+        {users.length === 0 && <p className="text-sm text-gray-500">Henüz kullanıcı eklenmedi.</p>}
       </div>
     </div>
   );

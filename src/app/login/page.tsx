@@ -12,6 +12,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ function LoginForm() {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
+        body: JSON.stringify(email ? { email, password } : { password })
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -49,8 +50,22 @@ function LoginForm() {
         <p className="mb-6 text-sm text-gray-500">SEO/GEO İçerik Motoru Paneli</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="label" htmlFor="email">
+              E-posta (kişisel hesabınız varsa)
+            </label>
+            <input
+              id="email"
+              type="email"
+              className="input"
+              placeholder="isteğe bağlı — boş bırakırsanız paylaşımlı şifre kullanılır"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
             <label className="label" htmlFor="password">
-              Erişim Şifresi
+              Şifre
             </label>
             <input
               id="password"
@@ -58,7 +73,6 @@ function LoginForm() {
               className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoFocus
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}

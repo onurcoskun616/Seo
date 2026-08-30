@@ -1,6 +1,6 @@
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { markdownToHtml } from "@/lib/markdown";
-import { Achievement, Campus, Department, SchoolIdentity } from "@/lib/types";
+import { Achievement, Campus, Department, ImageSuggestion, SchoolIdentity } from "@/lib/types";
 import { runSeoStrategist } from "./seoStrategist";
 import { runContentExpert } from "./contentExpert";
 import { runEditorFactCheck } from "./editorFactCheck";
@@ -16,7 +16,51 @@ export interface PipelineResult {
   faqJson: { question: string; answer: string }[];
   jsonLd: Record<string, unknown>;
   aiAnswerSnippet: string;
+  imageSuggestions: ImageSuggestion[];
   agentTrace: AgentTrace;
+}
+
+/**
+ * İç link (GEO/SEO) otomasyonu: yayınlanmış makaleler arasından aynı
+ * bölüm/kampüsü konu alanları, yoksa aynı türdeki diğer makaleleri bulup
+ * makalenin sonuna gerçek bağlantılarla bir "İlgili Yazılar" bölümü ekler.
+ * Rakip/harici site değil, kendi yayınlanmış içeriğimize link verir.
+ */
+async function buildRelatedArticlesSection(
+  input: GenerateArticleInput,
+  siteUrl: string
+): Promise<string> {
+  const supabase = getSupabaseServer();
+  const { data } = await supabase
+    .from("articles")
+    .select("title, slug, target_department_id, target_campus_id, article_type")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const all = data || [];
+  if (!all.length) return "";
+
+  let matches = all.filter(
+    (a) =>
+      (input.departmentId && a.target_department_id === input.departmentId) ||
+      (input.campusId && a.target_campus_id === input.campusId)
+  );
+  if (matches.length < 3) {
+    const sameType = all.filter(
+      (a) => a.article_type === input.articleType && !matches.includes(a)
+    );
+    matches = [...matches, ...sameType].slice(0, 3);
+  } else {
+    matches = matches.slice(0, 3);
+  }
+
+  if (!matches.length) return "";
+
+  const links = matches
+    .map((a) => `- [${a.title}](${siteUrl.replace(/\/$/, "")}/${a.slug})`)
+    .join("\n");
+  return `\n\n## İlgili Yazılar\n\n${links}`;
 }
 
 async function loadGroundedFacts(input: GenerateArticleInput): Promise<GroundedFacts> {
@@ -79,11 +123,16 @@ export async function runArticlePipeline(input: GenerateArticleInput): Promise<P
   const strategistPlan = await runSeoStrategist(input, facts);
   const contentDraft = await runContentExpert(input, facts, strategistPlan);
   const editorResult = await runEditorFactCheck(facts, strategistPlan, contentDraft);
+
+  const siteUrl = facts.identity.website_url || "https://www.topkapiokullari.com";
+  const relatedSection = await buildRelatedArticlesSection(input, siteUrl);
+  const finalMarkdown = editorResult.contentMarkdown + relatedSection;
+
   const geoResult = await runGeoStructuredData(
     input,
     facts,
     strategistPlan,
-    editorResult.contentMarkdown,
+    finalMarkdown,
     editorResult.faqAnswers
   );
 
@@ -91,11 +140,12 @@ export async function runArticlePipeline(input: GenerateArticleInput): Promise<P
     title: geoResult.title || strategistPlan.titleOptions[0] || strategistPlan.primaryKeyword,
     slug: geoResult.slug,
     metaDescription: geoResult.metaDescription,
-    contentMarkdown: editorResult.contentMarkdown,
-    contentHtml: markdownToHtml(editorResult.contentMarkdown),
+    contentMarkdown: finalMarkdown,
+    contentHtml: markdownToHtml(finalMarkdown),
     faqJson: editorResult.faqAnswers,
     jsonLd: geoResult.jsonLd,
     aiAnswerSnippet: geoResult.aiAnswerSnippet,
+    imageSuggestions: geoResult.imageSuggestions,
     agentTrace: { strategistPlan, contentDraft, editorResult, geoResult }
   };
 }

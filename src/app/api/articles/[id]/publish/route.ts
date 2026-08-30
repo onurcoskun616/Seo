@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/apiUtil";
+import { requireRole } from "@/lib/authGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ const DEFAULT_MAPPING: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const check = await requireRole(req, ["admin", "reviewer"]);
+  if ("error" in check) return check.error;
   try {
     const body = await req.json().catch(() => ({}));
     const publishConfigId = body.publishConfigId;

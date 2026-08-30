@@ -9,7 +9,14 @@ import {
   PublishConfig
 } from "@/lib/types";
 
-type Tab = "content" | "seo" | "trace" | "publish";
+type Tab = "content" | "seo" | "trace" | "history" | "publish";
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Taslak",
+  in_review: "İncelemede",
+  approved: "Onaylandı",
+  published: "Yayınlandı"
+};
 
 export default function ArticleDetailPage() {
   const params = useParams<{ id: string }>();
@@ -22,6 +29,15 @@ export default function ArticleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setCurrentUser(d.user));
+  }, []);
+
+  const canReview = currentUser?.role === "admin" || currentUser?.role === "reviewer";
 
   function load() {
     return fetch(`/api/articles/${params.id}`)
@@ -84,13 +100,20 @@ export default function ArticleDetailPage() {
           <h1 className="text-xl font-semibold text-gray-900">{title || "(başlıksız)"}</h1>
           <p className="mt-1 text-xs text-gray-500">
             {ARTICLE_TYPE_LABELS[article.article_type]} · {AUDIENCE_LABELS[article.audience]} · Durum:{" "}
-            <strong>{article.status}</strong>
+            <strong>{STATUS_LABELS[article.status] || article.status}</strong>
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary" onClick={() => save("approved")} disabled={saving}>
-            Onayla
-          </button>
+          {article.status === "draft" && (
+            <button className="btn-secondary" onClick={() => save("in_review")} disabled={saving}>
+              İncelemeye Gönder
+            </button>
+          )}
+          {canReview && (article.status === "draft" || article.status === "in_review") && (
+            <button className="btn-secondary" onClick={() => save("approved")} disabled={saving}>
+              Onayla
+            </button>
+          )}
           <button className="btn-danger" onClick={remove}>
             Sil
           </button>
@@ -103,6 +126,7 @@ export default function ArticleDetailPage() {
             ["content", "İçerik"],
             ["seo", "SEO / JSON-LD"],
             ["trace", "Ajan Süreci"],
+            ["history", "Geçmiş"],
             ["publish", "Yayınla / Dışa Aktar"]
           ] as [Tab, string][]
         ).map(([value, label]) => (
@@ -185,6 +209,24 @@ export default function ArticleDetailPage() {
               ))}
             </div>
           </div>
+          <div>
+            <p className="label">Görsel Önerileri</p>
+            <p className="mb-2 text-xs text-gray-400">
+              Bunlar üretilmiş görseller değil; ekleyeceğiniz fotoğraflar için öneridir.
+            </p>
+            <div className="space-y-2">
+              {(article.image_suggestions || []).map((img, i) => (
+                <div key={i} className="rounded-lg border border-gray-200 p-3 text-sm">
+                  <p className="font-medium text-gray-800">{img.placement}</p>
+                  <p className="text-gray-600">{img.description}</p>
+                  <p className="mt-1 text-xs text-gray-400">alt: "{img.altText}"</p>
+                </div>
+              ))}
+              {(article.image_suggestions || []).length === 0 && (
+                <p className="text-sm text-gray-500">Görsel önerisi yok.</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -199,7 +241,78 @@ export default function ArticleDetailPage() {
         </div>
       )}
 
+      {tab === "history" && (
+        <HistoryPanel
+          articleId={article.id}
+          onRestored={() => {
+            load();
+            setTab("content");
+          }}
+        />
+      )}
+
       {tab === "publish" && <PublishPanel articleId={article.id} onDone={load} />}
+    </div>
+  );
+}
+
+interface Revision {
+  id: string;
+  title: string | null;
+  meta_description: string | null;
+  content_markdown: string | null;
+  status: string | null;
+  edited_by: string | null;
+  created_at: string;
+}
+
+function HistoryPanel({ articleId, onRestored }: { articleId: string; onRestored: () => void }) {
+  const [revisions, setRevisions] = useState<Revision[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/articles/${articleId}/revisions`)
+      .then((r) => r.json())
+      .then((d) => setRevisions(d.revisions || []))
+      .finally(() => setLoading(false));
+  }, [articleId]);
+
+  async function restore(revisionId: string) {
+    if (!confirm("Bu sürüme dönülsün mü? Mevcut hâl de bir geçmiş kaydı olarak saklanacak.")) return;
+    const res = await fetch(`/api/articles/${articleId}/revisions/${revisionId}/restore`, {
+      method: "POST"
+    });
+    if (!res.ok) {
+      alert((await res.json()).error || "Hata");
+      return;
+    }
+    onRestored();
+  }
+
+  if (loading) return <p className="text-sm text-gray-500">Yükleniyor...</p>;
+
+  return (
+    <div className="card space-y-3 p-6">
+      <p className="text-sm text-gray-500">
+        Her içerik/durum değişikliğinden önceki hâl burada saklanır.
+      </p>
+      {revisions.length === 0 && <p className="text-sm text-gray-500">Henüz geçmiş kaydı yok.</p>}
+      {revisions.map((r) => (
+        <div key={r.id} className="rounded-lg border border-gray-200 p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-gray-800">{r.title || "(başlıksız)"}</p>
+              <p className="text-xs text-gray-500">
+                {new Date(r.created_at).toLocaleString("tr-TR")}
+                {r.edited_by ? ` · ${r.edited_by} tarafından değiştirilmeden önce` : ""}
+              </p>
+            </div>
+            <button className="text-xs text-brand-600 hover:underline" onClick={() => restore(r.id)}>
+              Bu sürüme dön
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

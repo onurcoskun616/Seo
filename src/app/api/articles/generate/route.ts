@@ -1,30 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/apiUtil";
-import { runArticlePipeline } from "@/lib/agents/pipeline";
+import { checkGenerationBlocked, createArticleRecord } from "@/lib/agents/createArticle";
+import { VALID_ARTICLE_TYPES, VALID_AUDIENCES } from "@/lib/agents/constants";
 import { GenerateArticleInput } from "@/lib/agents/types";
-import { ArticleType, Audience } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const VALID_TYPES: ArticleType[] = [
-  "school_identity",
-  "department_overview",
-  "campus_overview",
-  "parent_guide",
-  "vocational_school_explainer",
-  "comparison",
-  "lgs_guide",
-  "student_achievements",
-  "education_approach"
-];
-const VALID_AUDIENCES: Audience[] = ["ogrenci_9_10", "veli", "genel"];
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    if (!VALID_TYPES.includes(body.articleType)) {
+    if (!VALID_ARTICLE_TYPES.includes(body.articleType)) {
       return NextResponse.json({ error: "Geçersiz makale türü." }, { status: 400 });
     }
     if (!VALID_AUDIENCES.includes(body.audience)) {
@@ -39,57 +25,13 @@ export async function POST(req: NextRequest) {
       extraInstructions: body.extraInstructions || undefined
     };
 
-    const supabase = getSupabaseServer();
-
-    if (input.articleType === "student_achievements") {
-      const { count, error: countErr } = await supabase
-        .from("achievements")
-        .select("*", { count: "exact", head: true });
-      if (countErr) throw countErr;
-      if (!count) {
-        return NextResponse.json(
-          {
-            error:
-              "Bilgi bankasında henüz öğrenci başarısı/projesi kaydı yok. Bu makale türünü uydurma bilgiyle doldurmamak için önce Bilgi Bankası > Başarılar sekmesinden en az bir kayıt ekleyin."
-          },
-          { status: 400 }
-        );
-      }
+    const blockedReason = await checkGenerationBlocked(input.articleType);
+    if (blockedReason) {
+      return NextResponse.json({ error: blockedReason }, { status: 400 });
     }
 
-    const result = await runArticlePipeline(input);
-
-    let slug = result.slug;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const { data: clash } = await supabase.from("articles").select("id").eq("slug", slug).limit(1);
-      if (!clash || clash.length === 0) break;
-      slug = `${result.slug}-${Math.random().toString(36).slice(2, 6)}`;
-    }
-
-    const { data, error } = await supabase
-      .from("articles")
-      .insert({
-        article_type: input.articleType,
-        target_department_id: input.departmentId,
-        target_campus_id: input.campusId,
-        audience: input.audience,
-        title: result.title,
-        slug,
-        meta_description: result.metaDescription,
-        content_markdown: result.contentMarkdown,
-        content_html: result.contentHtml,
-        faq_json: result.faqJson,
-        json_ld: result.jsonLd,
-        ai_answer_snippet: result.aiAnswerSnippet,
-        status: "draft",
-        agent_trace: result.agentTrace,
-        extra_instructions: input.extraInstructions ?? null
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return NextResponse.json({ article: data }, { status: 201 });
+    const article = await createArticleRecord(input);
+    return NextResponse.json({ article }, { status: 201 });
   } catch (err) {
     return errorResponse(err);
   }

@@ -21,8 +21,10 @@ verisi ve marka adının doğal ama belirgin geçtiği bir yapı ile üretilir.
   yapay zekâ ajanları makale yazarken yalnızca buradaki onaylı verilere
   dayanır, uydurma bilgi üretmemesi için talimatlandırılmıştır.
 - **OpenAI API** — 4 ajanlı bir içerik üretim hattı (bkz. aşağı).
-- Basit paylaşımlı şifre ile korunan bir yönetim paneli (tek kullanıcı/ekip
-  senaryosu için yeterli; ileride gerçek auth ile değiştirilebilir).
+- **Çoklu kullanıcı + rol bazlı onay akışı** — paylaşımlı `APP_PASSWORD` (sanal
+  "Yönetici") veya `Ayarlar > Kullanıcılar`dan eklenen bireysel hesaplar
+  (Yönetici / Editör / İnceleyen-Onaylayan) ile giriş. Editör taslak
+  oluşturup düzenler; onay/yayın yalnızca Yönetici/İnceleyen rolüyle yapılır.
 
 ## 4 Ajanlı İçerik Üretim Hattı
 
@@ -104,7 +106,40 @@ npm run dev
 
 - `/api/llms-txt` uç noktası, sitenize eklemeniz için hazır bir `llms.txt`
   içeriği üretir (AI botlarının okulu doğru özetlemesine yardımcı olur).
+- `/sitemap.xml` yayınlanan makalelerin listesini XML sitemap olarak üretir.
 - Yayınlanan her makalede JSON-LD şemasını sitenizin `<head>`'ine eklemeyi
   unutmayın.
 - Marka adının (Topkapı Okulları) ve kanonik bağlantının makale içinde en az
   2-3 kez doğal şekilde geçmesi, üretim ajanları tarafından otomatik sağlanır.
+- Her makalenin sonuna, yayınlanmış diğer makalelerinize otomatik "İlgili
+  Yazılar" bağlantıları eklenir (iç link/GEO otomasyonu).
+
+## Diğer özellikler
+
+- **Toplu üretim** (`/articles/batch`): tüm bölümler veya tüm kampüsler için
+  tek seferde, arka planda sırayla makale üretir; ilerlemeyi canlı gösterir.
+- **Görsel önerileri**: her makale için yer/alt-metin/açıklama şeklinde
+  fotoğraf önerileri üretilir (görsel üretilmez, sadece öneridir).
+- **Konu/Soru Araştırma** (`/research`): bir konu için olası arama
+  sorularını ve içerik fikirlerini yapay zekânın genel bilgisine dayanarak
+  listeler. **Gerçek zamanlı arama hacmi verisi değildir**, fikir/başlangıç
+  noktası olarak kullanın.
+- **Performans** (`/performance`, opsiyonel): Google Search Console'a
+  bağlanırsa gerçek tıklama/gösterim/sıra verisi gösterir. Kurulum için bir
+  GCP servis hesabı oluşturup Search Console API'yi etkinleştirin, servis
+  hesabı e-postasını Search Console mülkünüze "Tam" yetkiyle ekleyin;
+  `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` ve
+  `GSC_SITE_URL` ortam değişkenlerini tanımlayın.
+- **Zamanlanmış otomatik üretim**: `POST /api/cron/weekly-digest`
+  (`Authorization: Bearer $CRON_SECRET` header'ı ile), Bilgi Bankası'nda
+  henüz hiç makalesi olmayan bölüm/kampüsler için otomatik taslak üretir
+  (çalışma başına en fazla 3 hedef, maliyeti kontrol altında tutmak için).
+  Bir Render Cron Job veya başka bir zamanlayıcı ile haftalık tetiklenmesi
+  önerilir.
+- **Makale versiyon geçmişi**: her içerik/durum değişikliğinden önceki hâl
+  saklanır; makale detayındaki "Geçmiş" sekmesinden eski bir sürüme
+  dönülebilir.
+- **WordPress hızlı şablon**: `Ayarlar > Yayın Hedefleri`nde yeni bir hedef
+  eklerken "WordPress şablonunu doldur" butonu, WP REST API
+  (`/wp-json/wp/v2/posts`) ve Application Password auth header'ını otomatik
+  doldurur.

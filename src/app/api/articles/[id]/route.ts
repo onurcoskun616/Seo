@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/apiUtil";
 import { markdownToHtml } from "@/lib/markdown";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const REVIEWER_ONLY_STATUSES = new Set(["approved", "published"]);
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -18,8 +21,49 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json({ error: "Giriş gerekli." }, { status: 401 });
+    }
+
     const body = await req.json();
+
+    if (
+      typeof body.status === "string" &&
+      REVIEWER_ONLY_STATUSES.has(body.status) &&
+      session.role !== "admin" &&
+      session.role !== "reviewer"
+    ) {
+      return NextResponse.json(
+        { error: "Bu makaleyi onaylamak/yayınlamak için 'Yönetici' veya 'İnceleyen' rolü gerekir." },
+        { status: 403 }
+      );
+    }
+
     const supabase = getSupabaseServer();
+
+    const contentChanging =
+      typeof body.title === "string" ||
+      typeof body.meta_description === "string" ||
+      typeof body.content_markdown === "string";
+
+    if (contentChanging) {
+      const { data: current } = await supabase
+        .from("articles")
+        .select("title, meta_description, content_markdown, status")
+        .eq("id", params.id)
+        .single();
+      if (current) {
+        await supabase.from("article_revisions").insert({
+          article_id: params.id,
+          title: current.title,
+          meta_description: current.meta_description,
+          content_markdown: current.content_markdown,
+          status: current.status,
+          edited_by: session.name
+        });
+      }
+    }
 
     const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (typeof body.title === "string") payload.title = body.title;

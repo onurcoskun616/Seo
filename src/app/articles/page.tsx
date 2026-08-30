@@ -16,12 +16,14 @@ interface ArticleRow {
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Taslak",
+  in_review: "İncelemede",
   approved: "Onaylandı",
   published: "Yayınlandı"
 };
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
+  in_review: "bg-blue-100 text-blue-800",
   approved: "bg-amber-100 text-amber-800",
   published: "bg-green-100 text-green-800"
 };
@@ -44,9 +46,14 @@ export default function ArticlesPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Makaleler</h1>
           <p className="mt-1 text-sm text-gray-500">Üretilen tüm SEO/GEO makaleleri.</p>
         </div>
-        <Link href="/articles/new" className="btn-primary">
-          + Yeni Makale
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/articles/batch" className="btn-secondary">
+            Toplu Üretim
+          </Link>
+          <Link href="/articles/new" className="btn-primary">
+            + Yeni Makale
+          </Link>
+        </div>
       </div>
 
       {loading && <p className="text-sm text-gray-500">Yükleniyor...</p>}

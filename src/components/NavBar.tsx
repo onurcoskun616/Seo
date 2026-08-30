@@ -2,17 +2,28 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ROLE_LABELS_CLIENT } from "@/lib/roleLabels";
 
 const links = [
   { href: "/", label: "Panel" },
   { href: "/kb", label: "Bilgi Bankası" },
   { href: "/articles", label: "Makaleler" },
+  { href: "/research", label: "Konu Araştırma" },
+  { href: "/performance", label: "Performans" },
   { href: "/settings", label: "Ayarlar" }
 ];
 
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<{ name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setUser(d.user));
+  }, [pathname]);
 
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -44,9 +55,16 @@ export default function NavBar() {
             })}
           </nav>
         </div>
-        <button onClick={logout} className="text-sm text-gray-500 hover:text-gray-800">
-          Çıkış yap
-        </button>
+        <div className="flex items-center gap-3">
+          {user && (
+            <span className="text-xs text-gray-500">
+              {user.name} · {ROLE_LABELS_CLIENT[user.role] || user.role}
+            </span>
+          )}
+          <button onClick={logout} className="text-sm text-gray-500 hover:text-gray-800">
+            Çıkış yap
+          </button>
+        </div>
       </div>
     </header>
   );
