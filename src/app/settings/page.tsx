@@ -16,6 +16,7 @@ interface Status {
   openaiConfigured: boolean;
   supabaseConfigured: boolean;
   gscConfigured: boolean;
+  geminiConfigured: boolean;
   model: string;
   siteUrl: string;
 }
@@ -124,6 +125,14 @@ export default function SettingsPage() {
                 ok={status.gscConfigured}
                 okLabel="Bağlı"
                 badLabel="Yapılandırılmamış (opsiyonel)"
+              />
+            </li>
+            <li>
+              Gemini (GEO testi):{" "}
+              <StatusBadge
+                ok={status.geminiConfigured}
+                okLabel="Yapılandırılmış"
+                badLabel="Yapılandırılmamış (opsiyonel, GEMINI_API_KEY)"
               />
             </li>
             <li>Kullanılan model: <code>{status.model}</code></li>

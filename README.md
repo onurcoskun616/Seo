@@ -155,3 +155,10 @@ npm run dev
   tanımlarsanız, bir makale incelemeye gönderildiğinde, yayın başarısız
   olduğunda veya toplu üretim tamamlandığında Slack kanalınıza otomatik
   bildirim gider.
+- **GEO Görünürlük Testi** (`/geo-visibility`): gerçekçi arama sorularını,
+  canlı web araması yapan OpenAI (web search tool) ve Google Gemini
+  (Google Search grounding) modellerine sorup yanıtta "Topkapı Okulları"nın
+  geçip geçmediğini ölçer. **Not:** bu, ChatGPT.com/gemini.google.com'daki
+  gerçek kullanıcı deneyiminin birebir aynısı değil, API üzerinden bir
+  yaklaşık göstergedir; Gemini için `GEMINI_API_KEY` gerekir (Google AI
+  Studio'dan alınır), OpenAI zaten mevcut `OPENAI_API_KEY`'i kullanır.
