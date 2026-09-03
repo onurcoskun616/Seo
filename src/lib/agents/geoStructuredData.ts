@@ -20,7 +20,8 @@ async function enforceAeoWordCount(snippet: string): Promise<string> {
     system:
       "Sen bir AEO (Answer Engine Optimization) editörüsün. Verilen metni, anlamını, marka adını ve web sitesi atfını koruyarak TAM OLARAK 40-60 kelimeye getir. Sadece düzeltilmiş metni döndür, başka hiçbir açıklama ekleme.",
     prompt: `Mevcut metin (${wordCount} kelime, hedef 40-60 kelime):\n\n${snippet}`,
-    maxTokens: 300
+    maxTokens: 300,
+    source: "aeo_fix"
   });
   return fixed.trim();
 }
@@ -99,7 +100,12 @@ Aşağıdaki alanları içeren bir JSON nesnesi döndür:
 }
 `.trim();
 
-  const result = await runAgentJSON<GeoResult>({ system: SYSTEM_PROMPT, prompt, maxTokens: 3500 });
+  const result = await runAgentJSON<GeoResult>({
+    system: SYSTEM_PROMPT,
+    prompt,
+    maxTokens: 3500,
+    source: "geo_meta"
+  });
 
   if (!result.slug) {
     result.slug = slugify(result.title || plan.primaryKeyword);

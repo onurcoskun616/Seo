@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { logApiUsage } from "@/lib/usage";
 
 let cached: OpenAI | null = null;
 
@@ -21,6 +22,7 @@ export async function runAgentText(params: {
   system: string;
   prompt: string;
   maxTokens?: number;
+  source?: string;
 }): Promise<string> {
   const client = getClient();
   const response = await client.chat.completions.create({
@@ -31,6 +33,16 @@ export async function runAgentText(params: {
       { role: "user", content: params.prompt }
     ]
   });
+
+  if (response.usage) {
+    void logApiUsage({
+      source: params.source || "diger",
+      provider: "openai",
+      model: MODEL,
+      promptTokens: response.usage.prompt_tokens || 0,
+      completionTokens: response.usage.completion_tokens || 0
+    });
+  }
 
   return (response.choices[0]?.message?.content || "").trim();
 }
@@ -54,6 +66,7 @@ export async function runAgentJSON<T>(params: {
   system: string;
   prompt: string;
   maxTokens?: number;
+  source?: string;
 }): Promise<T> {
   const jsonInstruction =
     "\n\nÇOK ÖNEMLİ: Yanıtını SADECE geçerli JSON olarak ver. Açıklama, markdown kod bloğu işareti veya başka hiçbir metin ekleme.";
@@ -61,7 +74,8 @@ export async function runAgentJSON<T>(params: {
   const raw = await runAgentText({
     system: params.system,
     prompt: params.prompt + jsonInstruction,
-    maxTokens: params.maxTokens
+    maxTokens: params.maxTokens,
+    source: params.source
   });
 
   try {
@@ -72,7 +86,8 @@ export async function runAgentJSON<T>(params: {
       prompt:
         `Önceki yanıtın geçerli JSON değildi. Aşağıdaki metni SADECE geçerli JSON'a dönüştür, ` +
         `başka hiçbir şey yazma:\n\n${raw}`,
-      maxTokens: params.maxTokens
+      maxTokens: params.maxTokens,
+      source: params.source ? `${params.source}_retry` : "diger_retry"
     });
     return JSON.parse(extractJsonBlock(retry)) as T;
   }

@@ -13,6 +13,7 @@ const links = [
   { href: "/research", label: "Konu Araştırma" },
   { href: "/geo-visibility", label: "GEO Testi" },
   { href: "/performance", label: "Performans" },
+  { href: "/costs", label: "Maliyet" },
   { href: "/settings", label: "Ayarlar" }
 ];
 

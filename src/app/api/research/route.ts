@@ -39,7 +39,12 @@ Bu konuyla ilgili aşağıdaki alanları içeren bir JSON nesnesi döndür:
 }
 `.trim();
 
-    const result = await runAgentJSON<ResearchResult>({ system: SYSTEM_PROMPT, prompt, maxTokens: 2000 });
+    const result = await runAgentJSON<ResearchResult>({
+      system: SYSTEM_PROMPT,
+      prompt,
+      maxTokens: 2000,
+      source: "research"
+    });
     return NextResponse.json({ result });
   } catch (err) {
     return errorResponse(err);

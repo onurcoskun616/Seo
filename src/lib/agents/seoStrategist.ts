@@ -46,5 +46,5 @@ Aşağıdaki alanları içeren bir JSON nesnesi döndür:
 }
 `.trim();
 
-  return runAgentJSON<StrategistPlan>({ system: SYSTEM_PROMPT, prompt, maxTokens: 3000 });
+  return runAgentJSON<StrategistPlan>({ system: SYSTEM_PROMPT, prompt, maxTokens: 3000, source: "strategist" });
 }

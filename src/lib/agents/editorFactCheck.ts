@@ -59,7 +59,7 @@ ${plan.faqQuestions.map((q) => `- ${q}`).join("\n")}
 ${draftMarkdown}
 `.trim();
 
-  const raw = await runAgentText({ system: SYSTEM_PROMPT, prompt, maxTokens: 4500 });
+  const raw = await runAgentText({ system: SYSTEM_PROMPT, prompt, maxTokens: 4500, source: "editor" });
   const sections = parseSections(raw, ["MAKALE", "SSS", "UYARILAR"]);
 
   return {

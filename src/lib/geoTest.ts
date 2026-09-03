@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
+import { logApiUsage } from "@/lib/usage";
 
 export type GeoProvider = "openai" | "gemini";
 
@@ -41,6 +42,15 @@ export async function runOpenAiGeoCheck(prompt: string): Promise<GeoCheckResult>
       input: prompt
     });
     const text = response.output_text || "";
+    if (response.usage) {
+      void logApiUsage({
+        source: "geo_test",
+        provider: "openai",
+        model: process.env.OPENAI_MODEL || "gpt-5.1",
+        promptTokens: response.usage.input_tokens || 0,
+        completionTokens: response.usage.output_tokens || 0
+      });
+    }
     const { mentioned, mentionedWithLink } = detectMention(text);
     return { provider: "openai", responseText: text, mentioned, mentionedWithLink };
   } catch (err) {
@@ -63,6 +73,15 @@ export async function runGeminiGeoCheck(prompt: string): Promise<GeoCheckResult>
       config: { tools: [{ googleSearch: {} }] }
     });
     const text = response.text || "";
+    if (response.usageMetadata) {
+      void logApiUsage({
+        source: "geo_test",
+        provider: "gemini",
+        model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+        promptTokens: response.usageMetadata.promptTokenCount || 0,
+        completionTokens: response.usageMetadata.candidatesTokenCount || 0
+      });
+    }
     const { mentioned, mentionedWithLink } = detectMention(text);
     return { provider: "gemini", responseText: text, mentioned, mentionedWithLink };
   } catch (err) {

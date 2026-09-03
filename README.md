@@ -171,6 +171,15 @@ npm run dev
      bulunuyor mu kontrol eder.
   3. **Reçete**: Ölç sekmesinde geçilemeyen bir soru için tek tıkla
      Editöryal Takvim'e makale önerisi ekler.
+- **Maliyet Takibi** (`/costs`): her OpenAI/Gemini API çağrısının token
+  kullanımını kaydeder. Gerçek $ maliyeti görmek için kendi fiyat
+  oranlarınızı girmeniz gerekir (fiyatlar sık değiştiği için varsayılan
+  bir değer yoktur, yanlış yönlendirmemek için) — `Maliyet` sayfasında
+  yönetici olarak ekleyebilirsiniz.
+- **Birleşik Panel** (`/`): artık toplam/taslak/incelemede/yayınlanan
+  makale sayılarının yanında GEO Görünürlük Payı, ortalama kalite skoru,
+  takvimde vadesi gelen planlı makale sayısı ve bu ayki tahmini maliyeti
+  tek ekranda gösterir.
   4. **Yeniden ölç (Pazartesi Brifingi)**: yeniden ölçüm + teşhis + trend'i
      tek seferde çalıştırıp Slack'e özet gönderir; `Şimdi Oluştur ve Gönder`
      ile manuel tetiklenebilir. Haftalık otomatik çalışması için

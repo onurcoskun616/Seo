@@ -46,5 +46,5 @@ Başlıkta ve alt başlıklarda ana anahtar kelimeyi doğal şekilde kullan.
 Sadece makale metnini (markdown) döndür, başka açıklama ekleme.
 `.trim();
 
-  return runAgentText({ system: SYSTEM_PROMPT, prompt, maxTokens: 4000 });
+  return runAgentText({ system: SYSTEM_PROMPT, prompt, maxTokens: 4000, source: "content_expert" });
 }
