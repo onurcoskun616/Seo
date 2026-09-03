@@ -1,0 +1,17 @@
+name: Pazartesi GEO Brifingi
+
+on:
+  schedule:
+    # Her Pazartesi 06:00 UTC (Türkiye'de yaz saatinde 09:00, kış saatinde 08:00)
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  trigger-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Brifing endpoint'ini tetikle
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/monday-briefing"

@@ -155,10 +155,27 @@ npm run dev
   tanımlarsanız, bir makale incelemeye gönderildiğinde, yayın başarısız
   olduğunda veya toplu üretim tamamlandığında Slack kanalınıza otomatik
   bildirim gider.
-- **GEO Görünürlük Testi** (`/geo-visibility`): gerçekçi arama sorularını,
-  canlı web araması yapan OpenAI (web search tool) ve Google Gemini
-  (Google Search grounding) modellerine sorup yanıtta "Topkapı Okulları"nın
-  geçip geçmediğini ölçer. **Not:** bu, ChatGPT.com/gemini.google.com'daki
-  gerçek kullanıcı deneyiminin birebir aynısı değil, API üzerinden bir
-  yaklaşık göstergedir; Gemini için `GEMINI_API_KEY` gerekir (Google AI
-  Studio'dan alınır), OpenAI zaten mevcut `OPENAI_API_KEY`'i kullanır.
+- **GEO Döngüsü** (`/geo-visibility`) — "Ölç → Teşhis et → Reçete yaz →
+  Yeniden ölç" akışının tamamı:
+  1. **Ölç**: gerçekçi arama sorularını, canlı web araması yapan OpenAI (web
+     search tool) ve Google Gemini (Google Search grounding) modellerine
+     sorup yanıtta "Topkapı Okulları"nın geçip geçmediğini ölçer; sonuçları
+     tek bir **Görünürlük Payı** yüzdesinde özetler ve geçmiş ölçümlerin
+     trendini gösterir. **Not:** bu, ChatGPT.com/gemini.google.com'daki
+     gerçek kullanıcı deneyiminin birebir aynısı değil, API üzerinden bir
+     yaklaşık göstergedir; Gemini için `GEMINI_API_KEY` gerekir (Google AI
+     Studio'dan alınır), OpenAI zaten mevcut `OPENAI_API_KEY`'i kullanır.
+  2. **Teşhis**: gerçek sitenizin (`SITE_URL`) `robots.txt`'inde AI botlarına
+     (GPTBot, ClaudeBot, Google-Extended, PerplexityBot) izin var mı,
+     `llms.txt` sitede yayında mı, yayınlanmış makalelerde JSON-LD şeması
+     bulunuyor mu kontrol eder.
+  3. **Reçete**: Ölç sekmesinde geçilemeyen bir soru için tek tıkla
+     Editöryal Takvim'e makale önerisi ekler.
+  4. **Yeniden ölç (Pazartesi Brifingi)**: yeniden ölçüm + teşhis + trend'i
+     tek seferde çalıştırıp Slack'e özet gönderir; `Şimdi Oluştur ve Gönder`
+     ile manuel tetiklenebilir. Haftalık otomatik çalışması için
+     `.github/workflows/monday-briefing.yml` (ücretsiz GitHub Actions)
+     hazır — repo **Settings → Secrets and variables → Actions**'a
+     `CRON_SECRET` (Render'daki değerle aynı) ve `APP_URL`
+     (`https://topkapi-seo-engine.onrender.com`) secret'larını eklemeniz
+     yeterli.

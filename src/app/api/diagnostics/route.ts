@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/apiUtil";
-import { runGeoTestSuite } from "@/lib/geoTestRun";
+import { runDiagnostics } from "@/lib/diagnostics";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function GET() {
   try {
-    const summary = await runGeoTestSuite();
-    return NextResponse.json(summary);
+    const report = await runDiagnostics();
+    return NextResponse.json({ report });
   } catch (err) {
     return errorResponse(err);
   }
