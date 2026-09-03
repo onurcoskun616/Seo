@@ -201,7 +201,9 @@ export default function ArticleDetailPage() {
             </div>
           )}
           <div>
-            <p className="label">AI Cevap Özeti (yapay zekâ arama motorları için)</p>
+            <p className="label">
+              AEO Cevap Kapsülü (40-60 kelime, yapay zekânın birebir alıntılaması için)
+            </p>
             <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
               {article.ai_answer_snippet}
             </p>
